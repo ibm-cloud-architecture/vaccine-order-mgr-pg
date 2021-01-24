@@ -8,96 +8,82 @@ The goals of this project are:
 
 * Quarkus app with [Debezium outbox](https://debezium.io/documentation/reference/integrations/outbox.html) extension
 * Reactive REST APP with Mutiny
-* JPA with Hibernate and Panache
-* Debezium Postgres connector to publish OrderEvents to Kafka topic
+* JPA with Hibernate and Panache with Postgresql database
+* Debezium Postgres [Change Data Capture connector]() to publish OrderEvents to Kafka topic
+* Consume ShipmentPlan from Kafka using reactive messaging
+
+
+## Build deploy on OpenShift
+
+Be sure to define the parameters in the configmap in `src/main/kubernetes/configmap.yaml` and secret in src/main/kubernetes/secrets.yaml (the strings in the secret are base64 encoded) then do
+
+```shell
+# Example encoding a user:
+echo "app-scram" | base64 
+oc apply -f src/main/kubernetes/configmap.yaml
+oc apply -f src/main/kubernetes/secrets.yaml
+```
+
+The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image:
+
+```shell
+./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
+```
+
+The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app from the `ui` folder. The packaging build a runner jar and push it to the private image registry in OpenShift.
+
 
 ## Build and run locally
 
-### Prepare DB2 for Debezium CDC
+### Run with remote services
 
-As the environment is using a DB2 database configured for change data capture, a specific Db2 image is necessary. We have integrated a [dockerfile](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/environment/db2image/Dockerfile) and asn configuration to build such image. The details for this configuration are in the [Debezium Db2 connector documentation](https://debezium.io/documentation/reference/connectors/db2.html).
+It is possible to run the quarkus app to connect to the remote Postgres and Kafka both deployed on OpenShift.
 
-If you want to build this image you can do the following command.
+Set the following environment variables in a `.env` file, and get the truststore.p12 file from the Kafka configuration
 
  ```shell
- # under environment/db2image
- docker build -t ibmcase/db2orders .
- # push the image to a registry
- docker push ibmcase/db2orders
+ export QUARKUS_DATASOURCE_USERNAME=postgres
+ export QUARKUS_DATASOURCE_PASSWORD=<>
+ export POSTGRESQL_DBNAME=postgres
+ export QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:15432/postgres
+ export KAFKA_USER=<user with scram>
+ export KAFKA_PASSWORD=<user psw>
+ export KAFKA_BOOTSTRAP_SERVERS=<url bootstratp>.us-east.containers.appdomain.cloud:443
+ export KAFKA_SSL_TRUSTSTORE_LOCATION=${PWD}/truststore.p12
+ export KAFKA_SSL_TRUSTSTORE_PASSWORD=<pwd of the truststore> 
  ```
 
- Then start db2 to prepare the database for the first time only.
-
  ```shell
- docker-compose -f strimzi-docker-compose.yaml up db2 -d
+ # be sure to have packaged the order app first with the following command which also builds the UI
+ source .env
+ ./mvnw package -Dui.deps -Dui.dev -DskipTests
+ # If the UI does not need to be built again just do:
+ ./mvnw quarkus:dev 
  ```
 
-In the logs you should see the execution of the [cdcsetup.sh](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/environment/db2image/cdcsetup.sh) script which maps to the steps described in [this Debezium note](https://debezium.io/documentation/reference/connectors/db2.html#setting-up-db2)
+### Run with docker compose
 
-To run locally we have defined a [docker-compose file](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/environment/docker-compose.yaml) with one Kafka broker, one zookeeper, one DB2 container for the persistence, one Kafka Connect with the Debezium code with the DB2 Jdbc driver and one vaccine-order-service to support the demonstration.
+As an alternate we have defined two docker compose files to run the docker image of the service or run maven to build and execute `quarkus:dev` continuously.
 
-
-* To validate DB2 settings you can do one of the following troubleshooting commands:
-
-```shell
-# connect to DB2 server
-docker exec -ti db2 bash -c "su - db2inst1"
-# Access the database 
-db2 connect to TESTDB user db2inst1
-# list existing schemas
- db2 "select * from syscat.schemata"
-# list tables
-db2 list tables
-# this is the outcomes if the order services was started
-Table/View                      Schema          Type  Creation time             
-------------------------------- --------------- ----- --------------------------
-ORDERCREATEDEVENT               DB2INST1        T     2020-11-12-01.50.10.400490
-ORDEREVENTS                     DB2INST1        T     2020-11-12-01.50.10.650172
-ORDERUPDATEDEVENT               DB2INST1        T     2020-11-12-01.50.10.796566
-VACCINEORDERENTITY              DB2INST1        T     2020-11-12-01.50.10.874172
-# Verify the content of the current orders
-db2 "select * from vaccineorderentity"
-# List the table for the change data capture schema
-db2 list tables for schema asncdc
-```
-
-
-* To deploy this DB2 image on OpenShift cluster.
+* From docker image:
 
 ```shell
-oc login ...
-oc new-project eda-db2
-# Authorize default user using security constraint
-oc adm policy add-scc-to-user anyuid -z default
-# Deploy statefulset for the db2 image
-oc apply -f  environment/db2image/statefulset-db2orders.yaml
-
-```
-
-### Build vaccine order mgr service
-
- ```shell
- # be sure to have packaged the order app first with
- mvn package -Dui.deps -Dui.dev -D -DskipTests
+./mvnw package -Dui.deps -Dui.dev -D -DskipTests
  # build the image
  docker build -f src/main/docker/Dockerfile.jvm -t ibmcase/vaccineorderms  .
- # can also build with docker compose
+ # Start local environment 
  cd environment
- # with the option to build the db2, and debezium cdc container images
- docker-compose -f strimzi-docker-compose.yaml up -d --build
- # or with pre-existing images coming from dockerhub or your local registry if images already built
- docker-compose -f strimzi-docker-compose.yaml up -d
+ docker-compose  up -d 
  ```
+
+* With maven:
 
  If you want to start everything in development mode, the vaccine order service is executed via a maven container which starts `quarkus:dev`. Therefore the command is using another compose file: 
 
  ```shell
  cd environment
- docker-compose -f dev-docker-compose.yaml up -d [--build]
+ docker-compose -f dev-docker-compose.yaml up -d
  ```
-
- When started for the first time, the DB2 container may take some time to complete the TESTDB creation with the change data capture tables. (To do need to find a health check way to assess db2 is running)
-
 
 * Define Kafka topics
 
@@ -110,33 +96,19 @@ Some topics are created by the Kafka Connector.
 ./listTopics.sh
 
 __consumer_offsets
-db_history_vaccine_orders
-src_connect_configs
-src_connect_offsets
-src_connect_statuses
-vaccine_shipments
+
+vaccine_shipment_plans
 ```
 
-The `db_history_vaccine_orders` is the topic used to include database schema change on the vaccine orders table. 
+## Debezium CDC connector
 
-* Deploy and start the Debezium DB2 connector. The connector definition is [register-db2.json](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/environment/cdc/register-db2.json)
+The [Debezium Postgres connector](https://debezium.io/documentation/reference/connectors/postgresql.html) is a Kafka Connector. So to deploy to Event Streams or Strimzi Connector we will use source to image approach.
 
- ```shell
- # under environment/cdc
- curl -i -X POST -H "Accept:application/json" -H  "Content-Type:application/json" http://localhost:8083/connectors/ -d @cdc/register-db2.json
- ```
+* From the Event Streams UI > Toolbox > Kafka Connect menu, download the source to image yaml file.
+* Modify the file to get connection to the Kafka brokers
+* Add declaration to use Postgres connector
+* Deploy with `oc apply -f environment/cdc/kafka-connect-s2i.yaml`
 
-* Verify Topics created by the connector:
-
- ```shell
-  ./listTopics.sh 
-  vaccine_lot_db
-  vaccine_lot_db.DB2INST1.ORDEREVENTS
- ```
-
-The newly created `vaccine_lot_db` topic includes definition of the database and the connector. It does not aim to be used by application. The one to be used to get business events is `vaccine_lot_db.DB2INST1.ORDEREVENTS`.
-
-The connector is doing a snapshot of the `DB2INST1.ORDEREVENTS` table to send existing records to the topic.
 
 * Start a consumer on the CDC topic for the order events
 
@@ -166,33 +138,6 @@ The connector is doing a snapshot of the `DB2INST1.ORDEREVENTS` table to send ex
  {"before":null,"after":{"ID":"lvz4gYs/Q+aSqKmWjVGMXg==","AGGREGATETYPE":"VaccineOrderEntity","AGGREGATEID":"21","TYPE":"OrderCreated","TIMESTAMP":1605304440331350,"PAYLOAD":"{\"orderID\":21,\"deliveryLocation\":\"London\",\"quantity\":150,\"priority\":2,\"deliveryDate\":\"2020-12-25\",\"askingOrganization\":\"UK Governement\",\"vaccineType\":\"COVID-19\",\"status\":\"OPEN\",\"creationDate\":\"13-Nov-2020 21:54:00\"}"},"source":{"version":"1.3.0.Final","connector":"db2","name":"vaccine_lot_db","ts_ms":1605304806596,"snapshot":"last","db":"TESTDB","schema":"DB2INST1","table":"ORDEREVENTS","change_lsn":null,"commit_lsn":"00000000:0000150f:0000000000048fca"},"op":"r","ts_ms":1605304806600,"transaction":null}
  ```
 
-### Package the order service with docker
-
-If you want to build each images manually:
-
-* Db2 with ASN table and scripts for CDC
-
- ```shell
-  cd environment/db2images
-  docker build -t ibmcase/db2orders .
- ```
-
-* Build the Debezium Kafka Connector
-
- ```shell
-  cd environment/db2images
-  docker build -t ibmcase/cdc-connector .
- ```
-
-* Build the vaccine order service
-
- ```shell
-  # from project folder
-  mvn package -Dui.deps -Dui.dev -DskipTests
-  docker build  -f src/main/docker/Dockerfile.jvm -t ibmcase/vaccineorderms .
- ```
-
-
 ## Tests
 
 Unit and integration tests are done with Junit 5 and Test Container when needed or mockito to avoid backend access for CI/CD.
@@ -216,11 +161,6 @@ yarn serve
 Use the web browser and developer console to the address [http://localhost:4545](http://localhost:4545). The Vue app is configured to proxy to `localhost:8080`.
 
 
-## OpenShift deployment
-
-To deploy on OpenShift cluster see instructions in the [main documentation](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/).
-
-
 ## Troubleshooting
 
 ### Logs:
@@ -239,14 +179,6 @@ curl -i -X DELETE  http://localhost:8083/connectors/orderdb-connector
 ```
 
 ### Errors
-
-#### In Order service: com.ibm.db2.jcc.am.SqlException: DB2 SQL Error: SQLCODE=-1031, SQLSTATE=58031
-
-DB2 may not have finished its setup, specially using docker compose where the image may be built with Debezium and change data capture settings. Restarting the order service later should help.
-
-#### A DRDA Data Stream Syntax Error was detected.  Reason: 0x2110. ERRORCODE=-4499, SQLSTATE=58009
-
-This error may happen on OpenShift deployment and it is linked to a connection to the DB. Verify JDBC URL settings, user, password or network connection. 
 
 ## Git Action
 

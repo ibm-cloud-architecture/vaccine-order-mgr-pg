@@ -1,8 +1,9 @@
 {
-    "name": "orderdb-connector",
+    "name": "order-connector",
     "config": {
-        "connector.class" : "io.debezium.connector.db2.Db2Connector",
+        "connector.class" : "io.debezium.connector.postgresql.PostgresConnector",
         "tasks.max" : "1",
+        
         "database.server.name" : "vaccine_lot_db",
         "database.hostname" : "db2",
         "database.port" : "50000",

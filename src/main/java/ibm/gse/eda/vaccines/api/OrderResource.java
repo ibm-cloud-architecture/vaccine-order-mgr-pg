@@ -78,6 +78,9 @@ public class OrderResource {
         if (order.deliveryLocation == null) {
             throw new WebApplicationException("Order deliveryLocation was not set on request.", 422);
         }
+        if ( order.id !=null && -1 == order.id) {
+            order.id=null;
+        }
         if (order.quantity == null || order.quantity == 0) {
             throw new WebApplicationException("Order quantity was not set on request.", 422);
         }

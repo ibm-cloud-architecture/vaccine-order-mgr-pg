@@ -12,6 +12,8 @@ import javax.ws.rs.WebApplicationException;
 
 import org.jboss.logging.Logger;
 
+import ibm.gse.eda.vaccines.domain.events.OrderCreatedEvent;
+import ibm.gse.eda.vaccines.domain.events.OrderUpdatedEvent;
 import ibm.gse.eda.vaccines.infrastructure.OrderRepository;
 import io.debezium.outbox.quarkus.ExportedEvent;
 
@@ -39,7 +41,7 @@ public class OrderService {
 
     @Transactional
     public VaccineOrderEntity saveNewOrder(VaccineOrderEntity orderEntity) {
-        logger.info("persist for " + orderEntity.askingOrganization + " " + orderEntity.id);
+        logger.info("saveNewOrder for " + orderEntity.askingOrganization + " " + orderEntity.id);
         orderEntity.status = OrderStatus.OPEN;
         orderEntity.creationDate = simpleDateFormat.format(new Date());
         orderRepository.persist(orderEntity);
@@ -59,11 +61,11 @@ public class OrderService {
         }
         orderEntity.deliveryLocation = order.deliveryLocation;
         orderEntity.quantity = order.quantity;
+        orderEntity.status = order.status;
         orderEntity.priority = order.priority;
         orderEntity.deliveryDate = order.deliveryDate;
-
-        //event.fire(OrderUpdatedEvent.of(orderEntity));
         orderRepository.persistAndFlush(orderEntity);
+        event.fire(OrderUpdatedEvent.of(orderEntity));
         return orderEntity;
     }
 

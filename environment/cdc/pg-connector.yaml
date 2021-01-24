@@ -1,0 +1,19 @@
+apiVersion: eventstreams.ibm.com/v1alpha1 
+kind: KafkaConnector 
+metadata: 
+  name: pg-connector 
+  labels: 
+    eventstreams.ibm.com/cluster: connect-cluster 
+spec: 
+  class: io.debezium.connector.postgresql.PostgresConnector
+  tasksMax: 1 
+  config: 
+    database.dbname: postgres
+    database.hostname: postgres.vaccine.svc
+    database.password: postgres1234
+    database.port: 5432
+    database.server.name: vaccine
+    database.user: postgres
+    table.whitelist: public.orderevents
+    plugin.name: pgoutput
+    

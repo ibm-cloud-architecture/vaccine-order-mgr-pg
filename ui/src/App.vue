@@ -30,7 +30,7 @@
         transportation
       </v-btn>
       <v-btn
-        href="https://github.com/ibm-cloud-architecture/vaccine-order-mgr"
+        href="https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg"
         target="_blank"
         text
       >
