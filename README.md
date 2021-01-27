@@ -1,6 +1,6 @@
 # Vaccine Order Manager event-driven microservice
 
-This service is responsible to manage the Vaccine Order entity. It is done with Smallrye microprofile and reactive messaging with Kafka, hibernate ORM with panache for DB2 database, Quarkus stack and Tekton pipeline.
+This service is responsible to manage the Vaccine Order entity. It is done with Smallrye microprofile and reactive messaging with Kafka, hibernate ORM with panache for Posgresql database, Quarkus stack and git action pipeline.
 
 Visit detail implementation approach, design and different deployment model, read explanations of this service in [the main solution documentation](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/).
 
@@ -9,22 +9,54 @@ The goals of this project are:
 * Quarkus app with [Debezium outbox](https://debezium.io/documentation/reference/integrations/outbox.html) extension
 * Reactive REST APP with Mutiny
 * JPA with Hibernate and Panache with Postgresql database
-* Debezium Postgres [Change Data Capture connector]() to publish OrderEvents to Kafka topic
+* Debezium Postgres [Change Data Capture connector](https://debezium.io/documentation/reference/connectors/postgresql.html) to publish OrderEvents to Kafka topic
 * Consume ShipmentPlan from Kafka using reactive messaging
 
+## Pre-requisites
 
-## Build deploy on OpenShift
+As this service is using Kafka on Kubernetes (OpenShift), we need to get secret for user and password, certificates, bootstrap servers URL... See the common pre-requisites instructions in [this note](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#generate-scram-service-credentials).
 
-Be sure to define the parameters in the configmap in `src/main/kubernetes/configmap.yaml` and secret in src/main/kubernetes/secrets.yaml (the strings in the secret are base64 encoded) then do
+* Deploy a postgresql server on your `vaccine` project using:
+
+ ```shell
+ oc create serviceaccount vaccine-postgres
+ oc adm policy add-scc-to-user anyuid -n vaccine -z vaccine-postgres
+ oc create deployment postgres -e POSTGRESQL_USER=postgres -e POSTGRESQL_PASSWORD=postgrespwd -e POSTGRESQL_DATABASE=postgres  --image docker.io/postgres:11.6-alpine
+ ```
+
+## Build and deploy to OpenShift
+
+* Be sure to define the Kafka and Postgres connection parameters in the configmap in `src/main/kubernetes/configmap.yaml` and in the `src/main/kubernetes/secrets.yaml` secret. Here is an example of the secret to define such environment:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vaccine-order-secrets
+data:
+    KAFKA_USER: <username-base64-encoded>
+    KAFKA_PASSWORD: <pwd-base64-encoded>
+    QUARKUS_DATASOURCE_PASSWORD: <postgres-user-pwd-base64-encoded>
+    QUARKUS_DATASOURCE_USERNAME: <postgres-user-base64-encoded>
+```
+
+The strings in the secret are base64 encoded, so use something like: `echo "app-scram" | base64 `
+
+* Then proceed with the following commands:
 
 ```shell
-# Example encoding a user:
-echo "app-scram" | base64 
+#
 oc apply -f src/main/kubernetes/configmap.yaml
 oc apply -f src/main/kubernetes/secrets.yaml
 ```
 
-The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image:
+* If not done before, copy the cluster certificate via the secret to your project (`vaccine`):
+
+ ```shell
+ oc get secret eda-dev-cluster-ca-cert -n eventstreams --export -o yaml | oc apply -f -
+ ```
+
+* The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image capability of OpenShift:
 
 ```shell
 ./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
@@ -32,6 +64,13 @@ The application uses Quarkus OpenShift extension to create yaml files for OpenSh
 
 The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app from the `ui` folder. The packaging build a runner jar and push it to the private image registry in OpenShift.
 
+* Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
+
+Once deployed go to the demonstration section, next.
+
+## Demonstration
+
+See the script in [this section](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/#demonstration-script).
 
 ## Build and run locally
 

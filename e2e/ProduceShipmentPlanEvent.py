@@ -15,10 +15,7 @@ if __name__ == '__main__':
                 kafka_sasl_mechanism=config.KAFKA_SASL_MECHANISM,
                 topic_name = "vaccine_shipment_plans")
     producer.prepare("ShipmentPlanProducer")
-    shipmentPlan = {'planID': 'plan01','orderID': 'VO002','from': "Beerse, Belgium",'departureDate': '2021-03-10', 'type': 'Delivery', 'to': 'Paris, France','arrivalDate': '2021-03-11','quantity': 300, 'reefers': 3, 'cost': 50}
-             
-    producer.publishEvent(shipmentPlan,"planID")
-    shipmentPlan = {'planID': 'plan02','orderID': 'VO003','from': "Beerse, Belgium",'departureDate': '2021-03-10', 'type': 'Delivery', 'to': 'Milano, Italia','arrivalDate': '2021-03-11','quantity': 200, 'reefers': 2, 'cost': 50}
+    shipmentPlan = {'planID': 'plan01','orderID': '1','from': "Beerse, Belgium",'departureDate': '2021-01-21', 'type': 'Delivery', 'to': 'Paris, France','arrivalDate': '2021-01-21','quantity': 150, 'reefers': 3, 'cost': 50}
              
     producer.publishEvent(shipmentPlan,"planID")
     

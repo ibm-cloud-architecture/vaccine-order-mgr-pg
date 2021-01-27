@@ -6,7 +6,7 @@ metadata:
     eventstreams.ibm.com/use-connector-resources: "true"
 spec:
   version: 2.6.0
-  replicas: 1
+  replicas: 3
   bootstrapServers: eda-dev-kafka-bootstrap.eventstreams.svc:9093
   containers:
     - name: postgres-debezium
@@ -15,7 +15,7 @@ spec:
     certificateAndKey:
       certificate: user.crt
       key: user.key
-      secretName: eda-dev-ibm-es-kafka-user
+      secretName: tls
     type: tls
   template:
     pod:
@@ -42,11 +42,11 @@ spec:
     config.storage.replication.factor: 3
     offset.storage.replication.factor: 3
     status.storage.replication.factor: 3
-  tasksMax: 1
+  tasksMax: 3
   tls:
     trustedCertificates:
       - certificate: ca.crt
-        secretName: gse-eda-dev-cluster-ca-cert
+        secretName: eda-dev-cluster-ca-cert
 #  authentication:
 #    type: scram-sha-512
 #    username: my-connect-user

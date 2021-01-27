@@ -1,7 +1,7 @@
 apiVersion: eventstreams.ibm.com/v1alpha1 
 kind: KafkaConnector 
 metadata: 
-  name: pg-connector 
+  name: pg-connector-2
   labels: 
     eventstreams.ibm.com/cluster: connect-cluster 
 spec: 
