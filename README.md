@@ -12,6 +12,10 @@ The goals of this project are:
 * Debezium Postgres [Change Data Capture connector](https://debezium.io/documentation/reference/connectors/postgresql.html) to publish OrderEvents to Kafka topic
 * Consume ShipmentPlan from Kafka using reactive messaging
 
+The component integrate with Kafka and may be completed with the order optimization service to demonstrate the vaccine order fulfillment demonstration. It has not to be: this project demonstrates the outbox and CDC with debezium.
+
+ ![](./docs/vaccine-order-1.png)
+
 ## Pre-requisites
 
 As this service is using Kafka on Kubernetes (OpenShift), we need to get secret for user and password, certificates, bootstrap servers URL... See the common pre-requisites instructions in [this note](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#generate-scram-service-credentials).
@@ -66,7 +70,6 @@ The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app 
 
 * Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
 
-Once deployed go to the demonstration section, next.
 
 ## Demonstration
 
@@ -100,7 +103,7 @@ Set the following environment variables in a `.env` file, and get the truststore
  ./mvnw quarkus:dev 
  ```
 
-### Run with docker compose
+### Run locally with docker compose
 
 As an alternate we have defined two docker compose files to run the docker image of the service or run maven to build and execute `quarkus:dev` continuously.
 
@@ -152,7 +155,7 @@ The [Debezium Postgres connector](https://debezium.io/documentation/reference/co
 * Start a consumer on the CDC topic for the order events
 
  ```shell
- docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh     --bootstrap-server kafka:9092     --from-beginning     --property print.key=true     --topic vaccine_lot_db.DB2INST1.ORDEREVENTS
+ docker-compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh     --bootstrap-server kafka:9092     --from-beginning     --property print.key=true     --topic ...
  ```
 
 * Add new order from the user interface: http://localhost:8080/#/Orders, or...
@@ -177,17 +180,6 @@ The [Debezium Postgres connector](https://debezium.io/documentation/reference/co
  {"before":null,"after":{"ID":"lvz4gYs/Q+aSqKmWjVGMXg==","AGGREGATETYPE":"VaccineOrderEntity","AGGREGATEID":"21","TYPE":"OrderCreated","TIMESTAMP":1605304440331350,"PAYLOAD":"{\"orderID\":21,\"deliveryLocation\":\"London\",\"quantity\":150,\"priority\":2,\"deliveryDate\":\"2020-12-25\",\"askingOrganization\":\"UK Governement\",\"vaccineType\":\"COVID-19\",\"status\":\"OPEN\",\"creationDate\":\"13-Nov-2020 21:54:00\"}"},"source":{"version":"1.3.0.Final","connector":"db2","name":"vaccine_lot_db","ts_ms":1605304806596,"snapshot":"last","db":"TESTDB","schema":"DB2INST1","table":"ORDEREVENTS","change_lsn":null,"commit_lsn":"00000000:0000150f:0000000000048fca"},"op":"r","ts_ms":1605304806600,"transaction":null}
  ```
 
-## Tests
-
-Unit and integration tests are done with Junit 5 and Test Container when needed or mockito to avoid backend access for CI/CD.
-
-For end to end testing the `e2e` folder includes some python scripts to test new order creation.
-
-```shell
-cd e2e
-./post-order.sh
-```
-
 ## UI development
 
 For UI development start the components with `docker-compose  -f dev-docker-compose.yaml up -d`, then under the ui folder, do the following:
@@ -199,25 +191,6 @@ yarn serve
 
 Use the web browser and developer console to the address [http://localhost:4545](http://localhost:4545). The Vue app is configured to proxy to `localhost:8080`.
 
-
-## Troubleshooting
-
-### Logs:
-
-```shell
-# microservice logs:
-
-```
-
-### Connector operations
-
-To delete the CDC connector:
-
-```
-curl -i -X DELETE  http://localhost:8083/connectors/orderdb-connector
-```
-
-### Errors
 
 ## Git Action
 
