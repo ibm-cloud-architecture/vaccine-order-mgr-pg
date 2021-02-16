@@ -23,10 +23,24 @@ As this service is using Kafka on Kubernetes (OpenShift), we need to get secret 
 * Deploy a postgresql server on your `vaccine` project using:
 
  ```shell
- oc create serviceaccount vaccine-postgres
- oc adm policy add-scc-to-user anyuid -n vaccine -z vaccine-postgres
- oc create deployment postgres -e POSTGRESQL_USER=postgres -e POSTGRESQL_PASSWORD=postgrespwd -e POSTGRESQL_DATABASE=postgres  --image docker.io/postgres:11.6-alpine
- ```
+ Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
+
+  ```shell
+  # Define environement variables
+  SERVICE_ACCOUNT_NAME=postgres-sa
+  DEPLOYMENT_NAME=postgres
+  SERVICE_NAME=postgres
+  DOCKER_IMAGE=docker.io/postgres:11.6-alpine
+  POSTGRES_PASSWORD=adifficultpasswordtoguess
+
+  oc create serviceaccount ${SERVICE_ACCOUNT_NAME}
+  oc adm policy add-scc-to-user anyuid -n ${PROJECT_NAME} -z ${SERVICE_ACCOUNT_NAME}
+  oc create deployment ${DEPLOYMENT_NAME} --image=${DOCKER_IMAGE}
+  oc set serviceaccount deployment/${DEPLOYMENT_NAME} ${SERVICE_ACCOUNT_NAME}
+  oc patch deployment ${DEPLOYMENT_NAME} --type="json" -p='[{"op":"add", "path":"/spec/template/spec/containers/0/args", "value":[]},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"-c"},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"wal_level=logical"} ]'
+  oc set env deployment ${DEPLOYMENT_NAME} POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+  oc expose deployment ${DEPLOYMENT_NAME} --port 5432 --name ${SERVICE_NAME}
+  ```
 
 ## Build and deploy to OpenShift
 
