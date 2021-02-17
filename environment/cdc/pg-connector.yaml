@@ -9,8 +9,8 @@ spec:
   tasksMax: 1 
   config: 
     database.dbname: postgres
-    database.hostname: postgres.vaccine.svc
-    database.password: postgres1234
+    database.hostname: postgres.vaccineorder.svc
+    database.password: adifficultpasswordtoguess
     database.port: 5432
     database.server.name: vaccine
     database.user: postgres

@@ -7,5 +7,5 @@ spec:
   - name: revision
     value: master
   - name: url
-    value: https://github.com/ibm-cloud-architecture/vaccine-order-mgr
+    value: https://github.com/ibm-cloud-architecture/vaccine-order-mgr-pg
   type: git

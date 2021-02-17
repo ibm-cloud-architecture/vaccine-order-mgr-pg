@@ -20,13 +20,13 @@ The component integrate with Kafka and may be completed with the order optimizat
 
 As this service is using Kafka on Kubernetes (OpenShift), we need to get secret for user and password, certificates, bootstrap servers URL... See the common pre-requisites instructions in [this note](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#generate-scram-service-credentials).
 
-* Deploy a postgresql server on your `vaccine` project using:
+* Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
 
  ```shell
- Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
+ 
 
   ```shell
-  # Define environement variables
+  # Define environment variables
   SERVICE_ACCOUNT_NAME=postgres-sa
   DEPLOYMENT_NAME=postgres
   SERVICE_NAME=postgres
@@ -63,7 +63,6 @@ The strings in the secret are base64 encoded, so use something like: `echo "app-
 * Then proceed with the following commands:
 
 ```shell
-#
 oc apply -f src/main/kubernetes/configmap.yaml
 oc apply -f src/main/kubernetes/secrets.yaml
 ```
@@ -84,52 +83,16 @@ The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app 
 
 * Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
 
-
-## Demonstration
-
-See the script in [this section](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/#demonstration-script).
-
 ## Build and run locally
-
-### Run with remote services
-
-It is possible to run the quarkus app to connect to the remote Postgres and Kafka both deployed on OpenShift.
-
-Set the following environment variables in a `.env` file, and get the truststore.p12 file from the Kafka configuration
-
- ```shell
- export QUARKUS_DATASOURCE_USERNAME=postgres
- export QUARKUS_DATASOURCE_PASSWORD=<>
- export POSTGRESQL_DBNAME=postgres
- export QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:15432/postgres
- export KAFKA_USER=<user with scram>
- export KAFKA_PASSWORD=<user psw>
- export KAFKA_BOOTSTRAP_SERVERS=<url bootstratp>.us-east.containers.appdomain.cloud:443
- export KAFKA_SSL_TRUSTSTORE_LOCATION=${PWD}/truststore.p12
- export KAFKA_SSL_TRUSTSTORE_PASSWORD=<pwd of the truststore> 
- ```
-
- ```shell
- # be sure to have packaged the order app first with the following command which also builds the UI
- source .env
- ./mvnw package -Dui.deps -Dui.dev -DskipTests
- # If the UI does not need to be built again just do:
- ./mvnw quarkus:dev 
- ```
 
 ### Run locally with docker compose
 
-As an alternate we have defined two docker compose files to run the docker image of the service or run maven to build and execute `quarkus:dev` continuously.
-
-* From docker image:
+The docker compose starts postgresql, kafka, zookeeper, and maven to run `quarkus:dev` as container connected to the local docker network 
 
 ```shell
-./mvnw package -Dui.deps -Dui.dev -D -DskipTests
- # build the image
- docker build -f src/main/docker/Dockerfile.jvm -t ibmcase/vaccineorderms  .
  # Start local environment 
  cd environment
- docker-compose  up -d 
+ docker-compose -f dev-docker-compose.yaml up -d 
  ```
 
 * With maven:
@@ -155,6 +118,39 @@ __consumer_offsets
 
 vaccine_shipment_plans
 ```
+
+### Run with remote services
+
+It is possible to run the quarkus app to connect to the Postgres local and Kafka deployed on OpenShift.
+
+Set the following environment variables in a `.env` file, and get the truststore.p12 file from the Kafka configuration
+
+ ```shell
+ export QUARKUS_DATASOURCE_USERNAME=postgres
+ export QUARKUS_DATASOURCE_PASSWORD=<>
+ export POSTGRESQL_DBNAME=postgres
+ export QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:15432/postgres
+ export KAFKA_USER=<user with scram>
+ export KAFKA_PASSWORD=<user psw>
+ export KAFKA_BOOTSTRAP_SERVERS=<url bootstratp>.us-east.containers.appdomain.cloud:443
+ export KAFKA_SSL_TRUSTSTORE_LOCATION=${PWD}/truststore.p12
+ export KAFKA_SSL_TRUSTSTORE_PASSWORD=<pwd of the truststore> 
+ ```
+
+ ```shell
+ # be sure to have packaged the order app first with the following command which also builds the UI
+ source .env
+ ./mvnw package -Dui.deps -Dui.dev -DskipTests
+ # If the UI does not need to be built again just do:
+ ./mvnw quarkus:dev 
+ ```
+
+
+## Demonstration
+
+See the script in [this section](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/#demonstration-script).
+
+
 
 ## Debezium CDC connector
 

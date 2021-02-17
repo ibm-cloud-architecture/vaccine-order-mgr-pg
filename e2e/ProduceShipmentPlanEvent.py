@@ -1,6 +1,6 @@
 import logging
 from kafka.KafkaProducer import KafkaProducer
-import kafka.eventStreamsConfig as config
+import kafka.KafkaConfig as config
 
 '''
 Product some shipment plan

@@ -46,7 +46,7 @@ spec:
   tls:
     trustedCertificates:
       - certificate: ca.crt
-        secretName: eda-dev-cluster-ca-cert
+        secretName: kafka-cluster-ca-cert
 #  authentication:
 #    type: scram-sha-512
 #    username: my-connect-user

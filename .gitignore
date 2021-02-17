@@ -37,9 +37,11 @@ release.properties
 # Application specific
 certs/
 .env
+.env-ocp
 environment/db2data/
 scripts/setenv.sh
 ui/node_modules/
 src/main/kubernetes/*secrets.yaml
 **.p12
 environment/data/
+**/*.pyc
