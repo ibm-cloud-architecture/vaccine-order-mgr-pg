@@ -2,7 +2,7 @@ name: Build & push images for 'Vaccine solution - order manager'
 on:
   push:
     branches:
-      - master
+      - main
     paths-ignore:
       - 'docs/**'
       
