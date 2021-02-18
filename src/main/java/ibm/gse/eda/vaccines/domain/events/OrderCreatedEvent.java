@@ -9,31 +9,27 @@ import javax.persistence.Id;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import ibm.gse.eda.vaccines.domain.VaccineOrderEntity;
 import io.debezium.outbox.quarkus.ExportedEvent;
 
 @Entity
-public class OrderCreatedEvent implements ExportedEvent<String, String> {
+public class OrderCreatedEvent implements ExportedEvent<String, JsonNode> {
 
     private static ObjectMapper mapper = new ObjectMapper();
     @Id
     public long id;
     @Column(length=2046)
-    public String payload;
+    public JsonNode payload;
     public Instant timestamp;
     
     public OrderCreatedEvent(){}
 
     public OrderCreatedEvent(long id, JsonNode order) {
         this.id = id;
-        try {
-            this.payload = mapper.writeValueAsString(order);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            this.payload = "";
-        }
+        this.payload = order;
         this.timestamp = Instant.now();
     }
 
@@ -62,7 +58,7 @@ public class OrderCreatedEvent implements ExportedEvent<String, String> {
     }
 
     @Override
-    public String getPayload() {
+    public JsonNode getPayload() {
         return payload;
     }
 
