@@ -39,6 +39,14 @@ services:
       - "5432:5432"
     volumes:
       - ./data:/var/lib/postgresql/data/
+  pgadmin:
+    image: dpage/pgadmin4
+    hostname: pgadmin
+    ports:
+      - 8082:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@domain.com
+      PGADMIN_DEFAULT_PASSWORD: alongpassw0rd 
   orderservice:
     image: ibmcase/vaccineorderms
     container_name: vaccineorderms
@@ -48,7 +56,7 @@ services:
       dockerfile:
         ./src/main/docker/Dockerfile.jvm
     ports:
-      - 8081:8080
+      - 8080:8080
       - 5005:5005
     links:
       - postgresql
@@ -63,3 +71,7 @@ services:
       VUE_APP_TRANSPORTATION_URL: "http://vaccine-transport-simulator-vaccine.gse-eda-2020-10-3-0143c5dd31acd8e030a1d6e0ab1380e3-0000.us-east.containers.appdomain.cloud/transportation"
       VUE_APP_VERSION: 0.0.5
       VUE_APP_TITLE: "Vaccine Order Manager"
+      QUARKUS_DATASOURCE_USERNAME: postgres
+      QUARKUS_DATASOURCE_PASSWORD: pgpwd
+      POSTGRESQL_DBNAME: ordersdb
+      QUARKUS_DATASOURCE_JDBC_URL: jdbc:postgresql://postgres:5432/postgres
