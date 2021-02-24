@@ -6,22 +6,29 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeCreator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
+
+import org.hibernate.annotations.Type;
+import org.hibernate.annotations.TypeDef;
+import org.hibernate.annotations.TypeDefs;
 
 import ibm.gse.eda.vaccines.domain.VaccineOrderEntity;
 import io.debezium.outbox.quarkus.ExportedEvent;
 
 @Entity
+@TypeDefs({
+    @TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
+})
 public class OrderCreatedEvent implements ExportedEvent<String, JsonNode> {
 
     private static ObjectMapper mapper = new ObjectMapper();
     @Id
     public long id;
-    @Column(length=2046)
+    @Type(type = "jsonb")
+    @Column(columnDefinition = "jsonb")
     public JsonNode payload;
     public Instant timestamp;
     
