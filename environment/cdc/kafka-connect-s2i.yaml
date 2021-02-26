@@ -15,7 +15,7 @@ spec:
     certificateAndKey:
       certificate: user.crt
       key: user.key
-      secretName: tls
+      secretName: tls-user
     type: tls
   template:
     pod:

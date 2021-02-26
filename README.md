@@ -18,7 +18,9 @@ This service integrates with Kafka and may be completed with the order optimizat
 
 ## Pre-requisites
 
-Be sure to have a Kafka cluster deployed with the topics defined. This can be done using the [vaccine-gitops](https://github.com/ibm-cloud-architecture/vaccine-gitops) repository where dependent components such as Kafka and Postgresql are defined as code, and this project yaml files are also defined in this gitops project.
+Be sure to have a Kafka cluster deployed with the topics defined. This can be done using the [vaccine-gitops](https://github.com/ibm-cloud-architecture/vaccine-gitops) repository where dependent components such as Kafka and Postgresql are defined as code, and the order management microservice deployment config yaml files are also defined in this gitops project.
+
+[order-mgt-deployconfig.yaml](https://github.com/ibm-cloud-architecture/vaccine-gitops/blob/main/environments/dev/apps/order-mgt/base/order-mgt-deployconfig.yaml)
 
 ## Build 
 

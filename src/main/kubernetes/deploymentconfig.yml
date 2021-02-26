@@ -128,7 +128,7 @@ spec:
               key: ca.password
               name: kafka-cluster-ca-cert
         - name: JAVA_APP_JAR
-          value: /deployments/vaccine-order-mgr-pg-0.0.1-runner.jar
+          value: /deployments/app.jar
         - name: JAVA_LIB_DIR
           value: /deployments/lib
         envFrom:

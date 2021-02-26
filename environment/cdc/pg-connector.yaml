@@ -3,7 +3,7 @@ kind: KafkaConnector
 metadata: 
   name: pg-connector-2
   labels: 
-    eventstreams.ibm.com/cluster: connect-cluster 
+    eventstreams.ibm.com/cluster: my-connect-cluster 
 spec: 
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1 
