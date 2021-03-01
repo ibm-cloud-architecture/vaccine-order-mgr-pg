@@ -1,0 +1,22 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /q/metrics
+    prometheus.io/port: "8080"
+  labels:
+    app.kubernetes.io/name: vaccineorderms
+    app.kubernetes.io/version: 0.0.3
+    app: vaccineorderms
+    app.openshift.io/runtime: quarkus
+  name: vaccineorderms
+spec:
+  host: ""
+  path: /
+  port:
+    targetPort: 8080
+  to:
+    kind: Service
+    name: vaccineorderms

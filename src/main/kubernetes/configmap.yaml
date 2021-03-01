@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vaccine-order-ms-cm
+data:
+  APP_VERSION: 0.0.2
+  KAFKA_USER: tls-user
+  KAFKA_BOOTSTRAP_SERVERS: eda-dev-kafka-bootstrap.eventstreams.svc:9093
+  EDA_LOGGING_LEVEL: INFO
+  APP_TRANSPORTATIONURL: http://vaccine-transport-simulator-vaccine-solution.assets-arch-eda-6ccd7f378ae819553d37d5f2ee142bd6-0000.us-east.containers.appdomain.cloud/transportation
