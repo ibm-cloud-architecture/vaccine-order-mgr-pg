@@ -137,7 +137,6 @@ Set the following environment variables in a `.env` file, and get the truststore
 See the script in [this section](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/#demonstration-script).
 
 
-
 ## Debezium CDC connector
 
 The [Debezium Postgres connector](https://debezium.io/documentation/reference/connectors/postgresql.html) is a Kafka Connector. So to deploy to Event Streams or Strimzi Connector we will use source to image approach.
