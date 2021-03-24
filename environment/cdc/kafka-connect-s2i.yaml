@@ -7,7 +7,7 @@ metadata:
 spec:
   version: 2.6.0
   replicas: 1
-  bootstrapServers: eda-dev-kafka-bootstrap.eventstreams.svc:9093
+  bootstrapServers: <KAFKA_BOOTSTRAP_URL>
   authentication:
     certificateAndKey:
       certificate: user.crt
