@@ -44,6 +44,7 @@ export default {
   },
   methods: {
     initialize() {
+      axios.get("/api/v1/transportURL").then((resp) => (this.backendURL = resp.data));
       axios.get(this.backendURL).then((resp) => (this.transports = resp.data));
     },
     submit() {

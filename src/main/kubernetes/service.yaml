@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /metrics
+    prometheus.io/port: "8080"
+  labels:
+    app.kubernetes.io/name: vaccineorderms
+    app.kubernetes.io/version: 0.0.3
+    app: vaccineorderms
+    app.openshift.io/runtime: quarkus
+  name: vaccineorderms
+spec:
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+  selector:
+    app.kubernetes.io/name: vaccineorderms
+    app.kubernetes.io/version: 0.0.3
+  type: ClusterIP

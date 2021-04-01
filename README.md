@@ -1,71 +1,101 @@
 # Vaccine Order Manager event-driven microservice
 
-This service is responsible to manage the Vaccine Order entity. It is done with Smallrye microprofile and reactive messaging with Kafka, hibernate ORM with panache for Posgresql database, Quarkus stack and git action pipeline.
+This service is responsible to manage the Vaccine Order entity using the transactional outbox pattern. It is done with Smallrye microprofile, Quarkus, reactive messaging using Kafka, Debezium outbox extension and change data capture, hibernate ORM with panache for Posgresql database, and git action pipeline.
 
 Visit detail implementation approach, design and different deployment model, read explanations of this service in [the main solution documentation](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/).
 
-The goals of this project are:
+The goals of this project are to present:
 
-* Quarkus app with [Debezium outbox](https://debezium.io/documentation/reference/integrations/outbox.html) extension
-* Reactive REST APP with Mutiny
-* JPA with Hibernate and Panache with Postgresql database
+* a Quarkus app with the [Debezium outbox](https://debezium.io/documentation/reference/integrations/outbox.html) extension to create events in the same transaction as writing the business entity within Postgresql
+* the Reactive RESTs API with Mutiny and JAXRS
+* the JPA with Hibernate and Panache implementation for Postgresql database
 * Debezium Postgres [Change Data Capture connector](https://debezium.io/documentation/reference/connectors/postgresql.html) to publish OrderEvents to Kafka topic
 * Consume ShipmentPlan from Kafka using reactive messaging
 
-The component integrate with Kafka and may be completed with the order optimization service to demonstrate the vaccine order fulfillment demonstration. It has not to be: this project demonstrates the outbox and CDC with debezium.
+This service integrates with Kafka and may be completed with the order optimization service to demonstrate the vaccine order fulfillment use case. 
 
  ![](./docs/vaccine-order-1.png)
 
 ## Pre-requisites
 
-As this service is using Kafka on Kubernetes (OpenShift), we need to get secret for user and password, certificates, bootstrap servers URL... See the common pre-requisites instructions in [this note](https://ibm-cloud-architecture.github.io/refarch-eda/use-cases/overview/pre-requisites#generate-scram-service-credentials).
+Be sure to have a Kafka cluster deployed with the topics defined. This can be done using the [vaccine-gitops](https://github.com/ibm-cloud-architecture/vaccine-gitops) repository where dependent components such as Kafka and Postgresql are defined as code, and the order management microservice deployment config yaml files are also defined in this gitops project.
 
-* Deploy a postgres server. The orders are persisted in an external Postgres instance running on Openshift cluster. To do a simple deployment performs the following commands:
+[order-mgt-deployconfig.yaml](https://github.com/ibm-cloud-architecture/vaccine-gitops/blob/main/environments/dev/apps/order-mgt/base/order-mgt-deployconfig.yaml)
 
- ```shell
- 
+## Build 
 
-  ```shell
-  # Define environment variables
-  SERVICE_ACCOUNT_NAME=postgres-sa
-  DEPLOYMENT_NAME=postgres
-  SERVICE_NAME=postgres
-  DOCKER_IMAGE=docker.io/postgres:11.6-alpine
-  POSTGRES_PASSWORD=adifficultpasswordtoguess
+### Source to image
 
-  oc create serviceaccount ${SERVICE_ACCOUNT_NAME}
-  oc adm policy add-scc-to-user anyuid -n ${PROJECT_NAME} -z ${SERVICE_ACCOUNT_NAME}
-  oc create deployment ${DEPLOYMENT_NAME} --image=${DOCKER_IMAGE}
-  oc set serviceaccount deployment/${DEPLOYMENT_NAME} ${SERVICE_ACCOUNT_NAME}
-  oc patch deployment ${DEPLOYMENT_NAME} --type="json" -p='[{"op":"add", "path":"/spec/template/spec/containers/0/args", "value":[]},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"-c"},{"op":"add", "path":"/spec/template/spec/containers/0/args/-", "value":"wal_level=logical"} ]'
-  oc set env deployment ${DEPLOYMENT_NAME} POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-  oc expose deployment ${DEPLOYMENT_NAME} --port 5432 --name ${SERVICE_NAME}
-  ```
-
-## Build and deploy to OpenShift
-
-* Be sure to define the Kafka and Postgres connection parameters in the configmap in `src/main/kubernetes/configmap.yaml` and in the `src/main/kubernetes/secrets.yaml` secret. Here is an example of the secret to define such environment:
-
-```yaml
-apiVersion: v1
-kind: Secret
-metadata:
-  name: vaccine-order-secrets
-data:
-    KAFKA_USER: <username-base64-encoded>
-    KAFKA_PASSWORD: <pwd-base64-encoded>
-    QUARKUS_DATASOURCE_PASSWORD: <postgres-user-pwd-base64-encoded>
-    QUARKUS_DATASOURCE_USERNAME: <postgres-user-base64-encoded>
-```
-
-The strings in the secret are base64 encoded, so use something like: `echo "app-scram" | base64 `
-
-* Then proceed with the following commands:
+The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image capability of OpenShift. The following command will build the Vuejs UI, the quarkus app and then perform a source to image so the service will be deployed as pod inside OpenShift. 
 
 ```shell
-oc apply -f src/main/kubernetes/configmap.yaml
-oc apply -f src/main/kubernetes/secrets.yaml
+# You need to be connected to the OpenShift Cluster.
+./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
 ```
+
+The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app from the `ui` folder. The packaging builds a runner jar and pushes it to the private image registry in OpenShift.
+
+Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
+
+### Dockerize
+
+```shell
+mvn clean package -Dui.dev -Dui.deps -DskipTests
+docker build -f src/main/docker/Dockerfile.jvm -t ibmcase/vaccineorderms:0.0.2 .
+docker push ibmcase/vaccineorderms:0.0.2
+```
+
+## Run locally
+
+### For demo purpose
+
+If you want to develop from existing code, running: `mvn quarkus:dev` will start the app but you need to get access to a postgresql database and Kafka. So for that we have integrated a docker compose file.
+
+The `environment/docker-compose.yaml` docker compose starts postgresql, kafka, zookeeper, and the orderms connected to the local docker network called `app-tier`
+
+```shell
+ # Start local environment 
+ cd environment
+ docker-compose -f docker-compose.yaml up -d 
+ ```
+
+* Verify the Kafka topics
+
+Some topics are created by the Kafka Connector.
+
+```shell
+# validate topics created
+./listTopics.sh
+# __consumer_offsets
+# vaccine_shipment_plans
+```
+
+
+### UI development
+
+For UI development start the components with `docker-compose  -f dev-docker-compose.yaml up -d`, then under the ui folder, do the following:
+
+```
+yarn install
+yarn serve
+```
+
+Use the web browser and developer console to the address [http://localhost:4545](http://localhost:4545). The Vue app is configured to proxy to `localhost:8080`.
+
+
+### Git Action
+
+This repository includes a Github [workflow](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/.github/workflows/dockerbuild.yaml) to build the app and push a new docker image to the public registry. To do that we need to define four secrets in the github repository:
+
+* DOCKER_IMAGE_NAME the image name to build. Here it is `vaccineorderms`
+* DOCKER_USERNANE: user to access docker hub
+* DOCKER_PASSWORD: and its password.
+* DOCKER_REPOSITORY for example the organization we use is `ibmcase`
+
+## With remote Kafka and Postgresql
+
+Using the [gitops repository](https://github.com/ibm-cloud-architecture/vaccine-gitops) we can have an OpenShift project created and then Postgresql and Kafka deployed.
+
 
 * If not done before, copy the cluster certificate via the secret to your project (`vaccine`):
 
@@ -73,51 +103,7 @@ oc apply -f src/main/kubernetes/secrets.yaml
  oc get secret eda-dev-cluster-ca-cert -n eventstreams --export -o yaml | oc apply -f -
  ```
 
-* The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image capability of OpenShift:
 
-```shell
-./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
-```
-
-The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app from the `ui` folder. The packaging build a runner jar and push it to the private image registry in OpenShift.
-
-* Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
-
-## Build and run locally
-
-### Run locally with docker compose
-
-The docker compose starts postgresql, kafka, zookeeper, and maven to run `quarkus:dev` as container connected to the local docker network 
-
-```shell
- # Start local environment 
- cd environment
- docker-compose -f dev-docker-compose.yaml up -d 
- ```
-
-* With maven:
-
- If you want to start everything in development mode, the vaccine order service is executed via a maven container which starts `quarkus:dev`. Therefore the command is using another compose file: 
-
- ```shell
- cd environment
- docker-compose -f dev-docker-compose.yaml up -d
- ```
-
-* Define Kafka topics
-
-Some topics are created by the Kafka Connector.
-
-```shell
-# Under environment folder
-./createTopic.sh
-# validate topics created
-./listTopics.sh
-
-__consumer_offsets
-
-vaccine_shipment_plans
-```
 
 ### Run with remote services
 
@@ -149,7 +135,6 @@ Set the following environment variables in a `.env` file, and get the truststore
 ## Demonstration
 
 See the script in [this section](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/#demonstration-script).
-
 
 
 ## Debezium CDC connector
@@ -189,24 +174,3 @@ The [Debezium Postgres connector](https://debezium.io/documentation/reference/co
  {"ID":"lvz4gYs/Q+aSqKmWjVGMXg=="}	
  {"before":null,"after":{"ID":"lvz4gYs/Q+aSqKmWjVGMXg==","AGGREGATETYPE":"VaccineOrderEntity","AGGREGATEID":"21","TYPE":"OrderCreated","TIMESTAMP":1605304440331350,"PAYLOAD":"{\"orderID\":21,\"deliveryLocation\":\"London\",\"quantity\":150,\"priority\":2,\"deliveryDate\":\"2020-12-25\",\"askingOrganization\":\"UK Governement\",\"vaccineType\":\"COVID-19\",\"status\":\"OPEN\",\"creationDate\":\"13-Nov-2020 21:54:00\"}"},"source":{"version":"1.3.0.Final","connector":"db2","name":"vaccine_lot_db","ts_ms":1605304806596,"snapshot":"last","db":"TESTDB","schema":"DB2INST1","table":"ORDEREVENTS","change_lsn":null,"commit_lsn":"00000000:0000150f:0000000000048fca"},"op":"r","ts_ms":1605304806600,"transaction":null}
  ```
-
-## UI development
-
-For UI development start the components with `docker-compose  -f dev-docker-compose.yaml up -d`, then under the ui folder, do the following:
-
-```
-yarn install
-yarn serve
-```
-
-Use the web browser and developer console to the address [http://localhost:4545](http://localhost:4545). The Vue app is configured to proxy to `localhost:8080`.
-
-
-## Git Action
-
-This repository includes a Github [workflow](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/.github/workflows/dockerbuild.yaml) to build the app and push a new docker image to public registry. To do that we need to define 4 secrets in the github repository:
-
-* DOCKER_IMAGE_NAME the image name to build. Here it is `vaccineorderms`
-* DOCKER_USERNANE: user to access docker hub
-* DOCKER_PASSWORD: and its password.
-* DOCKER_REPOSITORY for example the organization we use is `ibmcase`

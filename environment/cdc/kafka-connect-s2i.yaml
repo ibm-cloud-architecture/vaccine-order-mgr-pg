@@ -1,21 +1,18 @@
 apiVersion: eventstreams.ibm.com/v1beta1
 kind: KafkaConnectS2I
 metadata:
-  name: connect-cluster
+  name: connect-cluster-<UNIQUE_ID>
   annotations:
     eventstreams.ibm.com/use-connector-resources: "true"
 spec:
   version: 2.6.0
-  replicas: 3
-  bootstrapServers: eda-dev-kafka-bootstrap.eventstreams.svc:9093
-  containers:
-    - name: postgres-debezium
-      image: debezium/connect:1.4
+  replicas: 1
+  bootstrapServers: <KAFKA_BOOTSTRAP_URL>
   authentication:
     certificateAndKey:
       certificate: user.crt
       key: user.key
-      secretName: tls
+      secretName: tls-user
     type: tls
   template:
     pod:
@@ -23,30 +20,37 @@ spec:
       metadata:
         annotations:
           eventstreams.production.type: CloudPakForIntegrationNonProduction
-          productID: 2a79e49111f44ec3acd89608e56138f5
+          productID: <GET_IT_FROM_EVENTSTREAMS>
           productName: IBM Event Streams for Non Production
           productVersion: 10.2.0
           productMetric: VIRTUAL_PROCESSOR_CORE
-          productChargedContainers: connect-cluster-connect
-          cloudpakId: c8b82d189e7545f0892db9ef2731b90d
+          productChargedContainers: connect-cluster-<UNIQUE_ID>-connect
+          cloudpakId: <GET_IT_FROM_EVENTSTREAMS>
           cloudpakName: IBM Cloud Pak for Integration
           cloudpakVersion: 2020.4.1
           productCloudpakRatio: "2:1"
   config:
-    group.id: connect-cluster
+    group.id: connect-cluster-<UNIQUE_ID>
     value.converter: org.apache.kafka.connect.json.JsonConverter
     value.converter.schemas.enable: false
-    offset.storage.topic: connect-cluster-offsets
-    config.storage.topic: connect-cluster-configs
-    status.storage.topic: connect-cluster-status
+    offset.storage.topic: connect-cluster-offsets-<UNIQUE_ID>
+    config.storage.topic: connect-cluster-configs-<UNIQUE_ID>
+    status.storage.topic: connect-cluster-status-<UNIQUE_ID>
     config.storage.replication.factor: 3
     offset.storage.replication.factor: 3
     status.storage.replication.factor: 3
+    config.providers: file
+    config.providers.file.class: org.apache.kafka.common.config.provider.FileConfigProvider
   tasksMax: 3
   tls:
     trustedCertificates:
       - certificate: ca.crt
         secretName: kafka-cluster-ca-cert
+  externalConfiguration:
+    volumes:
+      - name: postgres-connector
+        secret:
+          secretName: postgres-connector
 #  authentication:
 #    type: scram-sha-512
 #    username: my-connect-user

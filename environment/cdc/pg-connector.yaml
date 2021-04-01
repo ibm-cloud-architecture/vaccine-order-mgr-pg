@@ -1,19 +1,32 @@
 apiVersion: eventstreams.ibm.com/v1alpha1 
 kind: KafkaConnector 
 metadata: 
-  name: pg-connector-2
+  name: pg-connector-apicurio
   labels: 
-    eventstreams.ibm.com/cluster: connect-cluster 
+    eventstreams.ibm.com/cluster: connect-cluster-<UNIQUE_ID>
 spec: 
   class: io.debezium.connector.postgresql.PostgresConnector
   tasksMax: 1 
-  config: 
-    database.dbname: postgres
-    database.hostname: postgres.vaccineorder.svc
-    database.password: adifficultpasswordtoguess
-    database.port: 5432
-    database.server.name: vaccine
-    database.user: postgres
-    table.whitelist: public.orderevents
+  config:
+    database.dbname: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:database-dbname}"
+    database.hostname: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:database-hostname}"
+    database.password: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:database-password}"
+    database.port: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:database-port}"
+    database.server.name: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:database-server-name}"
+    database.user: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:database-user}"
+    table.whitelist: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:table-whitelist}"
     plugin.name: pgoutput
-    
+    key.converter: io.apicurio.registry.utils.converter.AvroConverter
+    key.converter.apicurio.registry.as-confluent: true
+    key.converter.apicurio.registry.url: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:schema-registry-url}"
+    key.converter.apicurio.registry.global-id: io.apicurio.registry.utils.serde.strategy.GetOrCreateIdStrategy
+    key.converter.apicurio.registry.request.ssl.truststore.location: "${file:/tmp/strimzi-connect.properties:ssl.truststore.location}"
+    key.converter.apicurio.registry.request.ssl.truststore.password: "${file:/tmp/strimzi-connect.properties:ssl.truststore.password}"
+    key.converter.apicurio.registry.request.ssl.truststore.type: "${file:/tmp/strimzi-connect.properties:ssl.truststore.type}"
+    value.converter: io.apicurio.registry.utils.converter.AvroConverter
+    value.converter.apicurio.registry.as-confluent: true
+    value.converter.apicurio.registry.url: "${file:/opt/kafka/external-configuration/postgres-connector/connector.properties:schema-registry-url}"
+    value.converter.apicurio.registry.global-id: io.apicurio.registry.utils.serde.strategy.GetOrCreateIdStrategy
+    value.converter.apicurio.registry.request.ssl.truststore.location: "${file:/tmp/strimzi-connect.properties:ssl.truststore.location}"
+    value.converter.apicurio.registry.request.ssl.truststore.password: "${file:/tmp/strimzi-connect.properties:ssl.truststore.password}"
+    value.converter.apicurio.registry.request.ssl.truststore.type: "${file:/tmp/strimzi-connect.properties:ssl.truststore.type}"
