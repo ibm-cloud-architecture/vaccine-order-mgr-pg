@@ -51,9 +51,4 @@ spec:
       - name: postgres-connector
         secret:
           secretName: postgres-connector
-#  authentication:
-#    type: scram-sha-512
-#    username: my-connect-user
-#    passwordSecret:
-#      secretName: my-connect-user
-#      password: my-connect-password-key
+

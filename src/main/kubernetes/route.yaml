@@ -8,7 +8,7 @@ metadata:
     prometheus.io/port: "8080"
   labels:
     app.kubernetes.io/name: vaccineorderms
-    app.kubernetes.io/version: 0.0.3
+    app.kubernetes.io/version: 0.0.4
     app: vaccineorderms
     app.openshift.io/runtime: quarkus
   name: vaccineorderms

@@ -3,6 +3,6 @@ kind: ConfigMap
 metadata:
   name: vaccine-order-ms-cm
 data:
-  APP_VERSION: 0.0.3
+  APP_VERSION: 0.0.4
   KAFKA_USER: tls-user
   EDA_LOGGING_LEVEL: INFO

@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    prometheus.io/scheme: http
+    prometheus.io/scrape: "true"
+    prometheus.io/path: /q/metrics
+    prometheus.io/port: "8080"
+  labels:
+    app.kubernetes.io/name: vaccineorderms
+    app.kubernetes.io/version: 0.0.4
+    app: vaccineorderms
+  name: vaccineorderms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+        app.kubernetes.io/name: vaccineorderms
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scheme: http
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /q/metrics
+        prometheus.io/port: "8080"
+      labels:
+        app.kubernetes.io/name: vaccineorderms
+        app.kubernetes.io/version: 0.0.4
+        app: vaccineorderms
+        app.openshift.io/runtime: quarkus
+    spec:
+      terminationGracePeriodSeconds: 30
+      securityContext: {}
+      containers:
+      - args:
+        - -Dquarkus.http.host=0.0.0.0
+        - -Djava.util.logging.manager=org.jboss.logmanager.LogManager
+        - -jar
+        - /deployments/quarkus-run.jar
+        command:
+        - java
+        env:
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: KAFKA_SSL_TRUSTSTORE_LOCATION
+          value: /deployments/certs/server/ca.p12
+        - name: KAFKA_SSL_TRUSTSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: ca.password
+              name: kafka-cluster-ca-cert
+        - name: KAFKA_SSL_KEYSTORE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: user.password
+              name: tls-user
+        - name: KAFKA_SSL_KEYSTORE_LOCATION
+          value: /deployments/certs/user/user.p12
+        - name: KAFKA_SSL_KEYSTORE_TYPE
+          value: PKCS12
+        - name: KAFKA_CA_CERT_NAME
+          value: kafka-cluster-ca-cert
+        - name: KAFKA_SSL_PROTOCOL
+          value: TLSv1.2
+        - name: KAFKA_SSL_TRUSTSTORE_TYPE
+          value: PKCS12
+        - name: KAFKA_SECURITY_PROTOCOL
+          value: SSL
+        - name: JAVA_APP_JAR
+          value: /deployments/quarkus-run.jar
+        - name: JAVA_LIB_DIR
+          value: /deployments/lib
+        - name: QUARKUS_DATASOURCE_JDBC_URL
+          valueFrom:
+            secretKeyRef:
+              key: url
+              name: postgresql-creds
+        - name: QUARKUS_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              key: username
+              name: postgresql-creds
+        - name: QUARKUS_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: password
+              name: postgresql-creds
+        envFrom:
+        - configMapRef:
+            name: vaccine-order-ms-cm
+        - configMapRef:
+            name: kafka-topics-cm
+        image: quay.io/ibmcase/vaccineorderms
+        imagePullPolicy: Always
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /q/health/live
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 10
+        name: vaccineorderms
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /q/health/ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 10
+        volumeMounts:
+        - mountPath: /deployments/certs/server
+          name: kafka-cert
+          readOnly: false
+          subPath: ""
+        - mountPath: /deployments/certs/user
+          name: user-cert
+          readOnly: false
+          subPath: ""
+      serviceAccount: vaccine-runtime
+      volumes:
+      - name: kafka-cert
+        secret:
+          optional: false
+          secretName: kafka-cluster-ca-cert
+      - name: user-cert
+        secret:
+          optional: false
+          secretName: tls-user
+        

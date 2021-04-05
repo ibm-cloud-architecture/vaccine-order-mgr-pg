@@ -7,11 +7,14 @@ import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
 import ibm.gse.eda.vaccines.api.dto.ShipmentPlan;
 import ibm.gse.eda.vaccines.domain.events.ShipmentPlanEvent;
 import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
+import io.smallrye.reactive.messaging.kafka.IncomingKafkaCloudEventMetadata;
 
 @ApplicationScoped
 public class ShipmentPlanProcessor {
@@ -24,9 +27,12 @@ public class ShipmentPlanProcessor {
     }
 
     @Incoming("shipments")
-    public void process(ShipmentPlanEvent evt){
+    public Uni<Void> process(Message<ShipmentPlanEvent> evt){
+        IncomingKafkaCloudEventMetadata<String,ShipmentPlanEvent> cloudEventMetadata = evt.getMetadata(IncomingKafkaCloudEventMetadata.class).orElseThrow(() -> new IllegalArgumentException("Expected a Cloud Event"));
         logger.info("Event received: " + jsonb.toJson(evt));
-        plans.put(evt.planID,ShipmentPlan.from(evt));
+        ShipmentPlanEvent planEvt = evt.getPayload();
+        plans.put(planEvt.planID,ShipmentPlan.from(planEvt));
+        return Uni.createFrom().voidItem();
     }
 
     public Multi<ShipmentPlan> stream() {

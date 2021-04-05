@@ -45,3 +45,4 @@ src/main/kubernetes/*secrets.yaml
 **.p12
 environment/data/
 **/*.pyc
+data/
