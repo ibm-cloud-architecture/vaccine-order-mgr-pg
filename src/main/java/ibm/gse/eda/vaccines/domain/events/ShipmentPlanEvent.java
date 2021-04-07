@@ -5,16 +5,14 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 @RegisterForReflection
 public class ShipmentPlanEvent {
 
-    public String planID;
-    public String orderID;
-    public String from;
-    public String departureDate;
-    public String to;
-    public String arrivalDate;
-    public double quantity;
-    public int reefers;
-    public double cost;
-    public String type;
+    public String Type;
+    public String From;
+    public String DepartureDate;
+    public String To;
+    public String ArrivalDate;
+    public int Qty;
+    public int Reefers;
+    public int Cost;
 
     public ShipmentPlanEvent(){}
 }

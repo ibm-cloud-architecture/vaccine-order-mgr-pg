@@ -17,14 +17,14 @@ public class ShipmentPlan {
 
 	public static ShipmentPlan from(ShipmentPlanEvent evt) {
         ShipmentPlan sp = new ShipmentPlan();
-        sp.type = evt.type;
-        sp.from = evt.from;
-        sp.departureDate = evt.departureDate;
-        sp.to = evt.to;
-        sp.arrivalDate = evt.arrivalDate;
-        sp.cost = evt.cost;
-        sp.quantity = evt.quantity;
-        sp.reefers = evt.reefers;
+        sp.type = evt.Type;
+        sp.from = evt.From;
+        sp.departureDate = evt.DepartureDate;
+        sp.to = evt.To;
+        sp.arrivalDate = evt.ArrivalDate;
+        sp.cost = evt.Cost;
+        sp.quantity = evt.Qty;
+        sp.reefers = evt.Reefers;
 		return sp;
 	}
 }
