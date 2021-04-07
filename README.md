@@ -1,28 +1,35 @@
 # Vaccine Order Manager event-driven microservice
 
-This service is responsible to manage the Vaccine Order entity using the transactional outbox pattern. It is done with Smallrye microprofile, Quarkus, reactive messaging using Kafka, Debezium outbox extension and change data capture, hibernate ORM with panache for Posgresql database, and git action pipeline.
+This service is responsible to manage the Vaccine Order entity for the Vaccine Delivery Solution. It is using the transactional outbox pattern to generate order events to Kafka while writing to its persistence layer, which is Postgresql here. It is implemented with Smallrye microprofile, Quarkus, reactive messaging using Kafka, Debezium outbox extension and Debezium change data capture deployed within Kafka Connector, hibernate ORM with panache for Posgresql database, and git action pipeline.
+
 
 Visit detail implementation approach, design and different deployment model, read explanations of this service in [the main solution documentation](https://ibm-cloud-architecture.github.io/vaccine-solution-main/solution/orderms/).
 
-The goals of this project are to present:
+The goal of this project is to present:
 
-* a Quarkus app with the [Debezium outbox](https://debezium.io/documentation/reference/integrations/outbox.html) extension to create events in the same transaction as writing the business entity within Postgresql
-* the Reactive RESTs API with Mutiny and JAXRS
+* a Quarkus app with the [Debezium outbox](https://debezium.io/documentation/reference/integrations/outbox.html) extension to create order events in the same transaction as writing the business entity within Postgresql
+* how to use the Reactive RESTs API with Mutiny and JAXRS
 * the JPA with Hibernate and Panache implementation for Postgresql database
-* Debezium Postgres [Change Data Capture connector](https://debezium.io/documentation/reference/connectors/postgresql.html) to publish OrderEvents to Kafka topic
-* Consume ShipmentPlan from Kafka using reactive messaging
+* Debezium Postgres [Change Data Capture Kafka connector](https://debezium.io/documentation/reference/connectors/postgresql.html) to publish OrderEvents to Kafka topic
+* Consume ShipmentPlan from Kafka using reactive messaging, schema registry
 
-This service integrates with Kafka and may be completed with the order optimization service to demonstrate the vaccine order fulfillment use case. 
+This service integrates with Kafka and may be completed with the order optimization service to demonstrate the vaccine order fulfillment use case. The component view may look like the figure below:
 
  ![](./docs/vaccine-order-1.png)
 
 ## Pre-requisites
 
-Be sure to have a Kafka cluster deployed with the topics defined. This can be done using the [vaccine-gitops](https://github.com/ibm-cloud-architecture/vaccine-gitops) repository where dependent components such as Kafka and Postgresql are defined as code, and the order management microservice deployment config yaml files are also defined in this gitops project.
-
-[order-mgt-deployconfig.yaml](https://github.com/ibm-cloud-architecture/vaccine-gitops/blob/main/environments/dev/apps/order-mgt/base/order-mgt-deployconfig.yaml)
+Be sure to have a Kafka cluster deployed with the topics defined. This can be done using the [vaccine-gitops](https://github.com/ibm-cloud-architecture/vaccine-gitops) repository where dependent components such as Kafka (Strimzi) and Postgresql are defined as code, and the order management microservice deployment config yaml files are also defined in this gitops project.
 
 ## Build 
+
+### Build and package locally
+
+We have a script to compile the user interface, package the Quarkus app, and build a docker image.
+
+```shell
+./buildAll.sh
+```
 
 ### Source to image
 
@@ -37,29 +44,20 @@ The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app 
 
 Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
 
-### Dockerize
+## Run
 
-```shell
-mvn clean package -Dui.dev -Dui.deps -DskipTests
-docker build -f src/main/docker/Dockerfile.jvm -t ibmcase/vaccineorderms:0.0.2 .
-docker push ibmcase/vaccineorderms:0.0.2
-```
+### Local execution
 
-## Run locally
+If you want to develop with existing code, running: `mvn quarkus:dev` will start the app but you need to get access to a Postgresql database and Kafka. So for that we have integrated a docker compose file.
 
-### For demo purpose
-
-If you want to develop from existing code, running: `mvn quarkus:dev` will start the app but you need to get access to a postgresql database and Kafka. So for that we have integrated a docker compose file.
-
-The `environment/docker-compose.yaml` docker compose starts postgresql, kafka, zookeeper, and the orderms connected to the local docker network called `app-tier`
+The `docker-compose.yaml` docker compose starts Postgresql, Kafka, Zookeeper, and Postgresql admin console.
 
 ```shell
  # Start local environment 
- cd environment
- docker-compose -f docker-compose.yaml up -d 
+ docker-compose up -d 
  ```
 
-* Verify the Kafka topics
+* Create and verify the Kafka topics
 
 Some topics are created by the Kafka Connector.
 
