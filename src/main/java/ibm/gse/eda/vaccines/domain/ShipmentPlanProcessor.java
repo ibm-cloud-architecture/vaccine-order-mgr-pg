@@ -12,6 +12,7 @@ import org.jboss.logging.Logger;
 
 import ibm.gse.eda.vaccines.api.dto.ShipmentPlan;
 import ibm.gse.eda.vaccines.domain.events.ShipmentPlansEvent;
+import ibm.gse.eda.vaccines.domain.events.ShipmentPlanEvent;
 import ibm.gse.eda.vaccines.domain.events.CloudEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
@@ -32,7 +33,7 @@ public class ShipmentPlanProcessor {
 
     @Incoming("shipments")
     public Uni<Void> process(Message<ShipmentPlansEvent> evt){
-        IncomingCloudEventMetadata<ShipmentPlansEvent> cloudEventMetadata = evt.getMetadata(IncomingCloudEventMetadata.class);//.orElseThrow(() -> new IllegalArgumentException("Expected a Cloud Event"));
+        IncomingCloudEventMetadata<ShipmentPlansEvent> cloudEventMetadata = evt.getMetadata(IncomingCloudEventMetadata.class).orElseThrow(() -> new IllegalArgumentException("Expected a Cloud Event"));
         logger.infof("Received Cloud Events (spec-version: %s): source:  '%s', type: '%s', id: '%s' ",
                 cloudEventMetadata.getSpecVersion(),
                 cloudEventMetadata.getSource(),
