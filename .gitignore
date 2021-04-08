@@ -36,8 +36,7 @@ release.properties
 
 # Application specific
 certs/
-.env
-.env-ocp
+./.env**
 environment/db2data/
 scripts/setenv.sh
 ui/node_modules/

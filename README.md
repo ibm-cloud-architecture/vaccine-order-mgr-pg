@@ -92,15 +92,7 @@ This repository includes a Github [workflow](https://github.com/ibm-cloud-archit
 
 ## With remote Kafka and Postgresql
 
-Using the [gitops repository](https://github.com/ibm-cloud-architecture/vaccine-gitops) we can have an OpenShift project created and then Postgresql and Kafka deployed.
-
-
-* If not done before, copy the cluster certificate via the secret to your project (`vaccine`):
-
- ```shell
- oc get secret eda-dev-cluster-ca-cert -n eventstreams --export -o yaml | oc apply -f -
- ```
-
+Using the [gitops repository](https://github.com/ibm-cloud-architecture/vaccine-gitops), we can have an OpenShift project created with Postgresql and Kafka deployed.
 
 
 ### Run with remote services

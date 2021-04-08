@@ -59,7 +59,7 @@ services:
       PGADMIN_DEFAULT_PASSWORD: alongpassw0rd 
   orderms:
     # image: maven
-    image: ibmcase/vaccineorderms:0.0.2
+    image: quay.io/ibmcase/vaccineorderms:0.0.2
     container_name: orderms
     build:
       context:

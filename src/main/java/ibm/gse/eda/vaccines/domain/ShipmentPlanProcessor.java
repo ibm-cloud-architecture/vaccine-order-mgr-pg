@@ -6,20 +6,16 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 
+import org.apache.avro.generic.GenericRecord;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
 import org.jboss.logging.Logger;
 
 import ibm.gse.eda.vaccines.api.dto.ShipmentPlan;
-import ibm.gse.eda.vaccines.domain.events.ShipmentPlansEvent;
-import ibm.gse.eda.vaccines.domain.events.ShipmentPlanEvent;
 import ibm.gse.eda.vaccines.domain.events.CloudEvent;
+import ibm.gse.eda.vaccines.domain.events.ShipmentPlanEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
-import io.smallrye.reactive.messaging.kafka.IncomingKafkaCloudEventMetadata;
-import io.smallrye.reactive.messaging.ce.IncomingCloudEventMetadata;
-import io.smallrye.reactive.messaging.kafka.IncomingKafkaRecord;
-import io.smallrye.reactive.messaging.ce.CloudEventMetadata;
 
 @ApplicationScoped
 public class ShipmentPlanProcessor {
@@ -32,19 +28,19 @@ public class ShipmentPlanProcessor {
     }
 
     @Incoming("shipments")
-    public Uni<Void> process(Message<ShipmentPlansEvent> evt){
-        IncomingCloudEventMetadata<ShipmentPlansEvent> cloudEventMetadata = evt.getMetadata(IncomingCloudEventMetadata.class).orElseThrow(() -> new IllegalArgumentException("Expected a Cloud Event"));
-        logger.infof("Received Cloud Events (spec-version: %s): source:  '%s', type: '%s', id: '%s' ",
-                cloudEventMetadata.getSpecVersion(),
-                cloudEventMetadata.getSource(),
-                cloudEventMetadata.getType(),
-                cloudEventMetadata.getId());
-        // TO-DO: iterate through the Shipments, convert them to ShipmentPlan and add these to the plans variable.
-        ShipmentPlansEvent spse = evt.getPayload();
-        for (ShipmentPlanEvent spe : spse.getShipments()){
-            plans.put(cloudEventMetadata.getId(),ShipmentPlan.from(spe));
+    public Uni<Void> process(Message<GenericRecord> evt){  
+        GenericRecord spse = evt.getPayload();
+        logger.info(spse.getSchema().getName());
+        int idx = 0;
+        logger.info(spse.get(0));
+        logger.info(spse);
+        CloudEvent ce = jsonb.fromJson(spse.toString(), CloudEvent.class);
+        for (ShipmentPlanEvent spe : ce.data.Shipments) {
+            logger.info("Event received: " + jsonb.toJson(spe));
+            plans.put("SHIP_" + idx,ShipmentPlan.from(spe));
+            idx++;
         }
-        //logger.info("Event received: " + jsonb.toJson(spe));
+        //
         // ShipmentPlanEvent planEvt = evt.getPayload();
         // plans.put(planEvt.planID,ShipmentPlan.from(planEvt));
         return Uni.createFrom().voidItem();
