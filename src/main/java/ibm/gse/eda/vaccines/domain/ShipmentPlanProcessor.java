@@ -30,9 +30,7 @@ public class ShipmentPlanProcessor {
     @Incoming("shipments")
     public Uni<Void> process(Message<GenericRecord> evt){  
         GenericRecord spse = evt.getPayload();
-        logger.info(spse.getSchema().getName());
         int idx = 0;
-        logger.info(spse.get(0));
         logger.info(spse);
         CloudEvent ce = jsonb.fromJson(spse.toString(), CloudEvent.class);
         for (ShipmentPlanEvent spe : ce.data.Shipments) {
