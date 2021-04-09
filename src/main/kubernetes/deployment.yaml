@@ -92,6 +92,8 @@ spec:
             name: vaccine-order-ms-cm
         - configMapRef:
             name: kafka-topics-cm
+        - secretRef:
+            name: kafka-schema-registry
         image: quay.io/ibmcase/vaccineorderms
         imagePullPolicy: Always
         livenessProbe:
