@@ -47,16 +47,25 @@
 </template>
 
 <script>
-
+import axios from "axios";
 export default {
   name: "App",
   data: () => {
-    
+      
       return {
-        version:  process.env.VUE_APP_VERSION, 
+        version: {},
         title: process.env.VUE_APP_TITLE
       }   
   },
+  created() {
+    this.initialize();
+  },
+  methods: {
+    initialize() {
+      axios.get("/api/v1/orders/version").then((resp) => (this.version = resp.data));
+      console.log(this.version)
+    }
+  }
 };
 console.log(process.env);
 
