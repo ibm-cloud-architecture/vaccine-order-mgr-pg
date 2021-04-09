@@ -35,13 +35,14 @@ public class ShipmentPlanProcessor {
     @Outgoing("internal-plan-stream")                             
     @Broadcast                                              
     @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
-    public Uni<ShipmentPlans> process(Message<GenericRecord> evt){  
-        GenericRecord spse = evt.getPayload();
+    public Uni<ShipmentPlans> process(GenericRecord spse){  
+        //GenericRecord spse = evt.getPayload();
         int idx = 0;
         logger.info(spse);
         CloudEvent ce = jsonb.fromJson(spse.toString(), CloudEvent.class);
         for (ShipmentPlanEvent spe : ce.data.Shipments) {
             ShipmentPlan plan = ShipmentPlan.from(spe);
+            logger.info(plan.toString());
             plans.put("SHIP_" + idx,plan);
             idx++;
         }

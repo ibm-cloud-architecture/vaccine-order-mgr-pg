@@ -55,7 +55,7 @@ If you want to develop with existing code, running: `mvn quarkus:dev` will start
 
 #### Staging mode
 
-You need to specify the URL and credential to connect to Kafka bootstrap server, user and Schema registry with an `.env` file:
+* You need to specify the URL and credential to connect to Kafka bootstrap server, user and Schema registry with an `.env` file:
 
 ```shell
 export KAFKA_USER=scram-user
@@ -70,25 +70,22 @@ export KAFKA_SECURITY_PROTOCOL=SASL_SSL
 export QUARKUS_PROFILE=staging
 ```
 
-Use the `docker-compose.yaml` docker compose to start Postgresql, Postgresql admin console, and the transportation service.
+* Use the `docker-compose.yaml` docker compose to start Postgresql, Postgresql admin console, and the transportation service.
 
 ```shell
  # Start local environment 
  docker-compose up -d 
  ```
 
-* Create and verify the Kafka topics
+* Load the env variable with: `source .env`
+* Start the app using `./mvnw quarkus:dev`
+* Upload schema definitions to the Schema registry
 
-Some topics are created by the Kafka Connector.
-
-```shell
-# validate topics created
-./listTopics.sh
-# __consumer_offsets
-# vaccine_shipment_plans
 ```
-
-Start the app using `./mvnw quarkus:dev`
+curl -X POST -H "Content-type: application/json; artifactType=AVRO" \
+   -H "X-Registry-ArtifactId: vaccine.reefers-value" \
+   --data @${scriptDir}/../data/avro/schemas/reefer.avsc http://localhost:8080/api/artifacts
+```
 
 #### Dev mode
 
@@ -100,13 +97,15 @@ docker-compose -f dev-docker-compose.yaml up -d
 
 * Create needed topics: `./scripts/createTopics.sh`
 * Verify created topics: `./scripts/listTopics.sh `
+* Upload schema definitions to the Schema registry
 * Create some shipment plan: 
+* Start the app using `./mvnw quarkus:dev`
 
 ### UI development
 
-For UI development start the components with `docker-compose  -f dev-docker-compose.yaml up -d`, then under the ui folder, do the following:
+For UI development start the components as explained in the previous section and then under the ui folder, do the following:
 
-```
+```shell
 yarn install
 yarn serve
 ```
@@ -119,40 +118,14 @@ Use the web browser and developer console to the address [http://localhost:4545]
 This repository includes a Github [workflow](https://github.com/ibm-cloud-architecture/vaccine-order-mgr/blob/master/.github/workflows/dockerbuild.yaml) to build the app and push a new docker image to the public registry. To do that we need to define four secrets in the github repository:
 
 * DOCKER_IMAGE_NAME the image name to build. Here it is `vaccineorderms`
-* DOCKER_USERNANE: user to access docker hub
-* DOCKER_PASSWORD: and its password.
+* DOCKER_USERNAME: user to access docker hub
+* DOCKER_PASSWORD: and his/her password.
 * DOCKER_REPOSITORY for example the organization we use is `ibmcase`
+* DOCKER_REGISTRY which point to `quay.io`
 
-## With remote Kafka and Postgresql
+## OpenShift Deployment
 
 Using the [gitops repository](https://github.com/ibm-cloud-architecture/vaccine-gitops), we can have an OpenShift project created with Postgresql and Kafka deployed.
-
-
-### Run with remote services
-
-It is possible to run the quarkus app to connect to the Postgres local and Kafka deployed on OpenShift.
-
-Set the following environment variables in a `.env` file, and get the truststore.p12 file from the Kafka configuration
-
- ```shell
- export QUARKUS_DATASOURCE_USERNAME=postgres
- export QUARKUS_DATASOURCE_PASSWORD=<>
- export POSTGRESQL_DBNAME=postgres
- export QUARKUS_DATASOURCE_JDBC_URL=jdbc:postgresql://localhost:15432/postgres
- export KAFKA_USER=<user with scram>
- export KAFKA_PASSWORD=<user psw>
- export KAFKA_BOOTSTRAP_SERVERS=<url bootstratp>.us-east.containers.appdomain.cloud:443
- export KAFKA_SSL_TRUSTSTORE_LOCATION=${PWD}/truststore.p12
- export KAFKA_SSL_TRUSTSTORE_PASSWORD=<pwd of the truststore> 
- ```
-
- ```shell
- # be sure to have packaged the order app first with the following command which also builds the UI
- source .env
- ./mvnw package -Dui.deps -Dui.dev -DskipTests
- # If the UI does not need to be built again just do:
- ./mvnw quarkus:dev 
- ```
 
 
 ## Demonstration

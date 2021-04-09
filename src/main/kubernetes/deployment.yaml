@@ -94,6 +94,8 @@ spec:
             name: kafka-topics-cm
         - secretRef:
             name: kafka-schema-registry
+        - secretRef:
+            name: vaccine-order-secrets
         image: quay.io/ibmcase/vaccineorderms
         imagePullPolicy: Always
         livenessProbe:
@@ -121,6 +123,10 @@ spec:
           periodSeconds: 30
           successThreshold: 1
           timeoutSeconds: 10
+        resources:
+          limits:
+            memory: "4Mi"
+            cpu: "250m"
         volumeMounts:
         - mountPath: /deployments/certs/server
           name: kafka-cert

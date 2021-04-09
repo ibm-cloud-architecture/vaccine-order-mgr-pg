@@ -54,7 +54,7 @@ export default {
     initialize() {
         let es = new EventSource(backendURL);
         es.addEventListener('message', event => {
-            let resp = JSON.parse(event);
+            let resp = JSON.parse(event.data);
             this.plans = resp.plans;
             console.log(this.plans);
         },false);
