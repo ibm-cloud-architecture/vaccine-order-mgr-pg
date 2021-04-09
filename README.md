@@ -19,9 +19,9 @@ This service integrates with Kafka and may be completed with the order optimizat
 
 ## Pre-requisites
 
-Be sure to have a Kafka cluster deployed with the topics defined. This can be done using the [vaccine-gitops](https://github.com/ibm-cloud-architecture/vaccine-gitops) repository where dependent components such as Kafka (Strimzi) and Postgresql are defined as code, and the order management microservice deployment config yaml files are also defined in this gitops project.
+Be sure to have a Kafka cluster deployed with the order and shipment plan topics defined. This can be done using the [vaccine-gitops](https://github.com/ibm-cloud-architecture/vaccine-gitops) repository where dependent components such as Kafka (Strimzi) and Postgresql are defined as code, and the order management microservice deployment config yaml files are also defined in this gitops project.
 
-## Build 
+## Build
 
 ### Build and package locally
 
@@ -33,14 +33,14 @@ We have a script to compile the user interface, package the Quarkus app, and bui
 
 ### Source to image
 
-The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image capability of OpenShift. The following command will build the Vuejs UI, the quarkus app and then perform a source to image so the service will be deployed as pod inside OpenShift. 
+The application uses Quarkus OpenShift extension to create yaml files for OpenShift and deploy the application using source to image capability of OpenShift. The following command will build the `Vuejs` UI, the quarkus app and then perform a source to image so the service will be deployed as pod inside OpenShift.
 
 ```shell
 # You need to be connected to the OpenShift Cluster.
 ./mvnw clean package -Dui.deps -Dui.dev -Dquarkus.kubernetes.deploy=true -DskipTests
 ```
 
-The `-Dui.deps -Dui.dev` arguments are used to prepare and build the vue.js app from the `ui` folder. The packaging builds a runner jar and pushes it to the private image registry in OpenShift.
+The `-Dui.deps -Dui.dev` arguments are used to prepare and build the `Vue.js` app from the `ui` folder. The packaging builds a runner jar and pushes it to the private image registry in OpenShift.
 
 Be sure to get the Order Microservice URL to access the user interface, using `oc get routes` on the project.
 
@@ -48,9 +48,29 @@ Be sure to get the Order Microservice URL to access the user interface, using `o
 
 ### Local execution
 
-If you want to develop with existing code, running: `mvn quarkus:dev` will start the app but you need to get access to a Postgresql database and Kafka. So for that we have integrated a docker compose file.
+If you want to develop with existing code, running: `mvn quarkus:dev` will start the app but you need to get access to a Postgresql database and Kafka. For that we have integrated different docker compose files depending of the target environment.
 
-The `docker-compose.yaml` docker compose starts Postgresql, Kafka, Zookeeper, and Postgresql admin console.
+* Staging profile is with a remote Kafka and Schema Registry but local services and Postgresql.
+* Dev profile is for get all running locally
+
+#### Staging mode
+
+You need to specify the URL and credential to connect to Kafka bootstrap server, user and Schema registry with an `.env` file:
+
+```shell
+export KAFKA_USER=scram-user
+export KAFKA_PASSWORD=
+export KAFKA_BOOTSTRAP_SERVERS=......appdomain.cloud:443
+export KAFKA_SSL_TRUSTSTORE_LOCATION=${PWD}/certs/truststore.p12
+export KAFKA_SSL_TRUSTSTORE_PASSWORD=
+export KAFKA_SSL_TRUSTSTORE_TYPE=PKCS12
+export SCHEMA_REGISTRY_URL=
+export KAFKA_SASL_MECHANISM=SCRAM-SHA-512
+export KAFKA_SECURITY_PROTOCOL=SASL_SSL
+export QUARKUS_PROFILE=staging
+```
+
+Use the `docker-compose.yaml` docker compose to start Postgresql, Postgresql admin console, and the transportation service.
 
 ```shell
  # Start local environment 
@@ -68,6 +88,19 @@ Some topics are created by the Kafka Connector.
 # vaccine_shipment_plans
 ```
 
+Start the app using `./mvnw quarkus:dev`
+
+#### Dev mode
+
+* Start docker compose
+
+```shell
+docker-compose -f dev-docker-compose.yaml up -d
+```
+
+* Create needed topics: `./scripts/createTopics.sh`
+* Verify created topics: `./scripts/listTopics.sh `
+* Create some shipment plan: 
 
 ### UI development
 

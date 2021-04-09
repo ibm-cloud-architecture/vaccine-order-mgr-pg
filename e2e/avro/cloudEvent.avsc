@@ -1,0 +1,48 @@
+{   
+    "namespace": "ibm.gse.eda.vaccine.orderoptimizer",
+    "doc": "Avro data schema for Vaccine Order Optimizer events",
+    "type":"record",
+    "name":"VaccineOrderCloudEvent",
+    "fields":[
+            {
+                "name": "type",
+                "type": "string",
+                "doc": "Type of event"
+            },
+            {
+                "name": "specversion",
+                "type": "string",
+                "doc": "CloudEvents specVersion"
+            },
+            {
+                "name": "source",
+                "type": "string",
+                "doc": "The source where this event comes from"
+            },
+            {
+                "name": "id",
+                "type": "string",
+                "doc": "CloudEvents event uniquely id"
+            },
+            {
+                "name": "time",
+                "type": "string",
+                "doc": "Time when this event was created"
+            },
+            {
+                "name": "dataschema",
+                "type": "string",
+                "doc": "Location of the events Avro data schema"
+            },
+            {
+                "name": "datacontenttype",
+                "type": "string",
+                "doc": "Type of the data attributes content"
+            },
+            {
+                "name": "data",
+                "type": ["ibm.gse.eda.vaccine.orderoptimizer.ShipmentPlan"],
+                "doc": "The event"
+            }
+    ]
+}

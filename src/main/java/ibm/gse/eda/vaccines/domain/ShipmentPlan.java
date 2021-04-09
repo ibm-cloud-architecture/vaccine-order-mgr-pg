@@ -1,4 +1,4 @@
-package ibm.gse.eda.vaccines.api.dto;
+package ibm.gse.eda.vaccines.domain;
 
 import ibm.gse.eda.vaccines.domain.events.ShipmentPlanEvent;
 

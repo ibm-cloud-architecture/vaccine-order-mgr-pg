@@ -34,13 +34,22 @@
 </style>
 
 <script>
+let backendURL = "/api/v1/orders";
 export default {
+  version: process.env.VUE_APP_VERSION, 
   name: "Home",
   data: () => { 
       return {
-        version: process.env.VUE_APP_VERSION, 
         title: process.env.VUE_APP_TITLE 
       }
+  },
+  created() {
+    this.initialize();
+  },
+  methods: {
+    initialize() {
+      axios.get(this.backendURL + "/version").then((resp) => (this.version = resp.data));
+    }
   }
 };
 </script>

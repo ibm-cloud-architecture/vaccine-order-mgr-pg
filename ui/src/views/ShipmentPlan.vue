@@ -54,9 +54,9 @@ export default {
     initialize() {
         let es = new EventSource(backendURL);
         es.addEventListener('message', event => {
-            let data = JSON.parse(event.data);
-            console.log(data)
-            this.plans.push(data);
+            let resp = JSON.parse(event);
+            this.plans = resp.plans;
+            console.log(this.plans);
         },false);
         es.addEventListener('error', event => {
             if (event.readyState == EventSource.CLOSED) {

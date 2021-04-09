@@ -44,11 +44,34 @@ services:
       - "5432:5432"
     volumes:
       - ./data:/bitnami/postgresql
+  transportation:
+    image: quay.io/ibmcase/vaccine-transportation
+    hostname: transportation
+    container_name: transportation
+    ports:
+      - 8081:8080
+    environment:
+      TRANSPORTATION_TOPIC: vaccine.transportation
+      SCHEMA_REGISTRY_URL: http://localhost:8090
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_SECURITY_PROTOCOL: PLAINTEXT
+      KAFKA_SSL_TRUSTSTORE_PASSWORD: 
+      KAFKA_SSL_TRUSTSTORE_LOCATION: 
+      KAFKA_USER:
+      KAFKA_SCRAM_PWD:
+      QUARKUS_PROFILE: dev
   pgadmin:
     image: dpage/pgadmin4
     hostname: pgadmin
+    container_name: pgadmin
     ports:
       - 8082:80
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@domain.com
       PGADMIN_DEFAULT_PASSWORD: alongpassw0rd 
+  apicurio: 
+    container_name: apicurio
+    hostname: apicurio
+    image: apicurio/apicurio-registry-mem
+    ports:
+      - 8090:8080

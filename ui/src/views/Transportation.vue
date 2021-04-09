@@ -49,6 +49,7 @@ export default {
     },
     submit() {
       console.log("Send records to kafka");
+      axios.get("/api/v1/transportURL").then((resp) => (this.backendURL = resp.data));
       axios.post(this.backendURL + "/start");
     },
   },

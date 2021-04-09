@@ -17,8 +17,16 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     hostname: pgadmin
+    container_name: pgadmin
     ports:
       - 8082:80
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@domain.com
       PGADMIN_DEFAULT_PASSWORD: alongpassw0rd 
+  transportation:
+    image: quay.io/ibmcase/vaccine-transportation
+    hostname: transportation
+    container_name: transportation
+    ports:
+      - 8081:8080
+    

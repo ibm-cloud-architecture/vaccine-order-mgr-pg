@@ -1,5 +1,6 @@
 package ibm.gse.eda.vaccines.domain;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -7,15 +8,18 @@ import javax.json.bind.Jsonb;
 import javax.json.bind.JsonbBuilder;
 
 import org.apache.avro.generic.GenericRecord;
+import org.eclipse.microprofile.reactive.messaging.Acknowledgment;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
 import org.eclipse.microprofile.reactive.messaging.Message;
+import org.eclipse.microprofile.reactive.messaging.Outgoing;
 import org.jboss.logging.Logger;
 
-import ibm.gse.eda.vaccines.api.dto.ShipmentPlan;
+import ibm.gse.eda.vaccines.api.dto.ShipmentPlans;
 import ibm.gse.eda.vaccines.domain.events.CloudEvent;
 import ibm.gse.eda.vaccines.domain.events.ShipmentPlanEvent;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
+import io.smallrye.reactive.messaging.annotations.Broadcast;
 
 @ApplicationScoped
 public class ShipmentPlanProcessor {
@@ -28,33 +32,25 @@ public class ShipmentPlanProcessor {
     }
 
     @Incoming("shipments")
-    public Uni<Void> process(Message<GenericRecord> evt){  
+    @Outgoing("internal-plan-stream")                             
+    @Broadcast                                              
+    @Acknowledgment(Acknowledgment.Strategy.POST_PROCESSING)
+    public Uni<ShipmentPlans> process(Message<GenericRecord> evt){  
         GenericRecord spse = evt.getPayload();
         int idx = 0;
         logger.info(spse);
         CloudEvent ce = jsonb.fromJson(spse.toString(), CloudEvent.class);
         for (ShipmentPlanEvent spe : ce.data.Shipments) {
-            logger.info("Event received: " + jsonb.toJson(spe));
-            plans.put("SHIP_" + idx,ShipmentPlan.from(spe));
+            ShipmentPlan plan = ShipmentPlan.from(spe);
+            plans.put("SHIP_" + idx,plan);
             idx++;
         }
-        //
-        // ShipmentPlanEvent planEvt = evt.getPayload();
-        // plans.put(planEvt.planID,ShipmentPlan.from(planEvt));
-        return Uni.createFrom().voidItem();
+        ShipmentPlans shipmentPlans = new ShipmentPlans();
+        shipmentPlans.plans = new ArrayList<ShipmentPlan>(this.plans.values());
+        return Uni.createFrom().item(shipmentPlans);
     }
 
-    // // Use a Java class for deserializing rather than the mp messaging CloudEvent libraries
-    // @Incoming("shipments")
-    // public Uni<Void> process(CloudEvent ce){
-    //     logger.info(ce.toString());
-    //     new IllegalArgumentException("blahblahblahlbahblahblah");
-    //     // ShipmentPlanEvent planEvt = evt.getPayload();
-    //     // plans.put(planEvt.planID,ShipmentPlan.from(planEvt));
-    //     return Uni.createFrom().voidItem();
-    // }
-
-    public Multi<ShipmentPlan> stream() {
+    public Multi<ShipmentPlan> getAllPlans() {
         return Multi.createFrom().items(plans.values().stream());
     }
 }

@@ -15,6 +15,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.jboss.logging.Logger;
 
 import ibm.gse.eda.vaccines.api.dto.VaccineOrderRequest;
@@ -31,11 +32,21 @@ public class OrderResource {
     Logger logger = Logger.getLogger("OrderResource");
     SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
  
+    @ConfigProperty(name="app.version")
+    public String appVersion;
+
     @Inject
     OrderRepository orderRepository;
 
     @Inject
     OrderService  orderService;
+
+    @GET
+    @Path("/version")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getVersion(){
+        return appVersion;
+    }
 
     @GET
     public Multi<VaccineOrderRequest> getAllOrders() {
