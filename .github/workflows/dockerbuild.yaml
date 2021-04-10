@@ -82,3 +82,4 @@ jobs:
         DOCKER_REG: ${{ secrets.DOCKER_REGISTRY }}
         WORKDIR: .
         DOCKERFILE: src/main/docker/Dockerfile.jvm
+        IMAGE_TAG: ${{ steps.bump-version-action.outputs.new_tag }}

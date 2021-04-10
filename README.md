@@ -79,12 +79,14 @@ export QUARKUS_PROFILE=staging
 
 * Load the env variable with: `source .env`
 * Start the app using `./mvnw quarkus:dev`
-* Upload schema definitions to the Schema registry
+* Upload schema definitions to the Schema registry (the name of the ArtifactId is the name of the topic + "-value")
+
+Example of commands:
 
 ```
 curl -X POST -H "Content-type: application/json; artifactType=AVRO" \
    -H "X-Registry-ArtifactId: vaccine.reefers-value" \
-   --data @${scriptDir}/../data/avro/schemas/reefer.avsc http://localhost:8080/api/artifacts
+   --data @${scriptDir}/../data/avro/schemas/reefer.avsc http://${SCHEMA_REGISTRY_URL}/api/artifacts
 ```
 
 #### Dev mode
