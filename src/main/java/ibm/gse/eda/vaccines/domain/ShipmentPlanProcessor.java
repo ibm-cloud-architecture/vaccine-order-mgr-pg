@@ -40,6 +40,7 @@ public class ShipmentPlanProcessor {
         int idx = 0;
         logger.info(spse);
         CloudEvent ce = jsonb.fromJson(spse.toString(), CloudEvent.class);
+        String planID = ce.id;
         for (ShipmentPlanEvent spe : ce.data.Shipments) {
             ShipmentPlan plan = ShipmentPlan.from(spe);
             logger.info(plan.toString());
@@ -47,6 +48,7 @@ public class ShipmentPlanProcessor {
             idx++;
         }
         ShipmentPlans shipmentPlans = new ShipmentPlans();
+        shipmentPlans.planID = planID;
         shipmentPlans.plans = new ArrayList<ShipmentPlan>(this.plans.values());
         return Uni.createFrom().item(shipmentPlans);
     }

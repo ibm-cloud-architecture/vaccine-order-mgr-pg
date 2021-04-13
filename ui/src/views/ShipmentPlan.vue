@@ -23,6 +23,7 @@ let backendURL = "/api/v1/shipments/stream";
 
 export default {
   data: () => ({
+    planID: "",
     plans: [],
     defaultPlan: {
       planID: "",
