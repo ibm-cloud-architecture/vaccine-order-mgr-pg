@@ -61,8 +61,8 @@ export default {
         es.addEventListener('error', event => {
             if (event.readyState == EventSource.CLOSED) {
                 console.log('Event was closed');
-                console.log(EventSource);
             }
+            console.log(event);
         }, false);
       // axios.get({url: backendURL,  responseType: 'stream'}).then((resp) => (this.plans = resp.data));
     }

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source .setenv.sh
+source ../.env-remote
 
 
 oc project $PROJECT_NAME 

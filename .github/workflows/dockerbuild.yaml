@@ -70,7 +70,7 @@ jobs:
 
         echo "Build and push the docker image $IMAGE_NAME"
         cd ${WORKDIR}
-        mvn package -DskipTests
+        mvn package  -Dui.deps  -Dui.dev -DskipTests
         docker build -f ${DOCKERFILE} -t ${IMAGE_NAME}:${IMAGE_TAG} . 
         docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
         docker push ${IMAGE_NAME}
